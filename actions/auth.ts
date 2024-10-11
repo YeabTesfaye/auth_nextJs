@@ -1,13 +1,17 @@
 "use server";
 
+import { hashUserPassword } from "@/lib/hash";
+import { createUser } from "@/lib/user";
+import { redirect } from "next/navigation";
+
 type ValidationErrors = {
   email?: string[];
   password?: string[];
 };
 
-// Change errors type to ValidationErrors
+
 type FormState = {
-  errors: ValidationErrors; // Update this to match the validation errors
+  errors: ValidationErrors; 
 };
 
 export async function signUp(prevState: FormState | undefined, formData: FormData) {
@@ -40,7 +44,8 @@ export async function signUp(prevState: FormState | undefined, formData: FormDat
   if (Object.keys(errors).length > 0) {
     return { errors };
   }
-
-  // Return undefined or a success state if needed
-  return undefined; // Or return { success: true }; based on your logic
+  const hashedPassword = hashUserPassword(password);
+  createUser(email,hashedPassword);
+  redirect('/')
+  
 }
