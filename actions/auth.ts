@@ -1,10 +1,11 @@
 "use server";
 
-import { hashUserPassword } from "@/lib/hash";
-import { createUser } from "@/lib/user";
+import { createAuthSession, destroySession } from "@/lib/auth";
+import { hashUserPassword, verifyPassword } from "@/lib/hash";
+import { createUser, getUserByEmail } from "@/lib/user";
 import { redirect } from "next/navigation";
 
-type ValidationErrors = {
+export type ValidationErrors = {
   email?: string[];
   password?: string[];
 };
@@ -14,7 +15,7 @@ type FormState = {
 };
 
 export async function signUp(
-  prevState: FormState | undefined,
+  formState: FormState, // removed prevState and adapted to match useFormState expectations
   formData: FormData
 ) {
   const email = formData.get("email") as string;
@@ -32,21 +33,21 @@ export async function signUp(
   // Validate password
   if (!password) {
     errors.password = [...(errors.password || []), "Password is required."];
-  } else {
-    const passwordValidationRegex =
-      /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-    if (password.length < 8) {
-      errors.password = [
-        ...(errors.password || []),
-        "Password must be at least 8 characters long.",
-      ];
-    }
-    if (!passwordValidationRegex.test(password)) {
-      errors.password = [
-        ...(errors.password || []),
-        "Password must contain at least one uppercase letter, one number, and one special character.",
-      ];
-    }
+    // } else {
+    //   const passwordValidationRegex =
+    //     /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    //   if (password.length < 8) {
+    //     errors.password = [
+    //       ...(errors.password || []),
+    //       "Password must be at least 8 characters long.",
+    //     ];
+    //   }
+    //   if (!passwordValidationRegex.test(password)) {
+    //     errors.password = [
+    //       ...(errors.password || []),
+    //       "Password must contain at least one uppercase letter, one number, and one special character.",
+    //     ];
+    //   }
   }
 
   // If there are any validation errors, return them
@@ -56,7 +57,9 @@ export async function signUp(
 
   const hashedPassword = hashUserPassword(password);
   try {
-    createUser(email, hashedPassword);
+    const id = createUser(email, hashedPassword);
+    await createAuthSession(id);
+    redirect("/training");
   } catch (error: any) {
     if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
       return {
@@ -67,6 +70,45 @@ export async function signUp(
     }
     throw error;
   }
+}
+export async function login(
+  prevState: FormState | undefined,
+  formData: FormData
+) {
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
 
+  const existingUser: any = getUserByEmail(email);
+  if (!existingUser) {
+    return {
+      errors: {
+        email: "Could not authenticate user, please check your credentials",
+      },
+    };
+  }
+  const isValidPassword = verifyPassword(existingUser.password, password);
+  if (!isValidPassword) {
+    return {
+      errors: {
+        password: "Could not authenticate user, please check your credentials",
+      },
+    };
+  }
   redirect("/training");
+  return existingUser;
+}
+
+export async function auth(
+  mode: any,
+  prevState: FormState,
+  formData: FormData
+) {
+  if (mode === "login") {
+    return login(prevState, formData);
+  }
+  return signUp(prevState, formData);
+}
+export async function logout() {
+  await destroySession();
+  redirect("/");
 }

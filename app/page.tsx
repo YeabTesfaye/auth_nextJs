@@ -1,10 +1,13 @@
+import AuthForm from "@/components/auth-form";
 
-import AuthForm from '@/components/auth-form'
-
-function Home() {
-  return (
-    <AuthForm />
-  )
+export interface Props {
+  searchParams: {
+    [key: string]: string | undefined;
+  };
+}
+function Home({ searchParams }: Props) {
+  const formMode = searchParams.mode || "login";
+  return <AuthForm mode={formMode} />;
 }
 
-export default Home
+export default Home;
