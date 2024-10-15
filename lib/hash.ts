@@ -5,7 +5,7 @@ export function hashUserPassword(password: string) {
 
   const hashedPassword = crypto.scryptSync(password, salt, 64);
   return hashedPassword.toString("hex") + ":" + salt;
-}
+} 
 
 export function verifyPassword(
   storedPassword: string,

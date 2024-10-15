@@ -27,12 +27,8 @@ function AuthForm() {
         <ul id="form-errors">
           {Object.keys(formState.errors).map((key) => {
             const errorKey = key as ValidationErrorKeys;
-        
-            return (
-              <li key={errorKey}>
-                {formState.errors[errorKey]}
-              </li>
-            );
+
+            return <li key={errorKey}>{formState.errors[errorKey]}</li>;
           })}
         </ul>
       )}

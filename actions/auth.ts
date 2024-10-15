@@ -9,12 +9,14 @@ type ValidationErrors = {
   password?: string[];
 };
 
-
 type FormState = {
-  errors: ValidationErrors; 
+  errors: ValidationErrors;
 };
 
-export async function signUp(prevState: FormState | undefined, formData: FormData) {
+export async function signUp(
+  prevState: FormState | undefined,
+  formData: FormData
+) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
@@ -31,21 +33,40 @@ export async function signUp(prevState: FormState | undefined, formData: FormDat
   if (!password) {
     errors.password = [...(errors.password || []), "Password is required."];
   } else {
-    const passwordValidationRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    const passwordValidationRegex =
+      /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     if (password.length < 8) {
-      errors.password = [...(errors.password || []), "Password must be at least 8 characters long."];
+      errors.password = [
+        ...(errors.password || []),
+        "Password must be at least 8 characters long.",
+      ];
     }
     if (!passwordValidationRegex.test(password)) {
-      errors.password = [...(errors.password || []), "Password must contain at least one uppercase letter, one number, and one special character."];
+      errors.password = [
+        ...(errors.password || []),
+        "Password must contain at least one uppercase letter, one number, and one special character.",
+      ];
     }
   }
 
-  // If there are any errors, return them
+  // If there are any validation errors, return them
   if (Object.keys(errors).length > 0) {
     return { errors };
   }
+
   const hashedPassword = hashUserPassword(password);
-  createUser(email,hashedPassword);
-  redirect('/')
-  
+  try {
+    createUser(email, hashedPassword);
+  } catch (error: any) {
+    if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
+      return {
+        errors: {
+          email: ["An account with this email already exists."], // Fixed message format
+        },
+      };
+    }
+    throw error;
+  }
+
+  redirect("/training");
 }
