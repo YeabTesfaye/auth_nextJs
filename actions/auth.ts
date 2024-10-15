@@ -33,21 +33,21 @@ export async function signUp(
   // Validate password
   if (!password) {
     errors.password = [...(errors.password || []), "Password is required."];
-    // } else {
-    //   const passwordValidationRegex =
-    //     /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-    //   if (password.length < 8) {
-    //     errors.password = [
-    //       ...(errors.password || []),
-    //       "Password must be at least 8 characters long.",
-    //     ];
-    //   }
-    //   if (!passwordValidationRegex.test(password)) {
-    //     errors.password = [
-    //       ...(errors.password || []),
-    //       "Password must contain at least one uppercase letter, one number, and one special character.",
-    //     ];
-    //   }
+    } else {
+      const passwordValidationRegex =
+        /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+      if (password.length < 8) {
+        errors.password = [
+          ...(errors.password || []),
+          "Password must be at least 8 characters long.",
+        ];
+      }
+      if (!passwordValidationRegex.test(password)) {
+        errors.password = [
+          ...(errors.password || []),
+          "Password must contain at least one uppercase letter, one number, and one special character.",
+        ];
+      }
   }
 
   // If there are any validation errors, return them
